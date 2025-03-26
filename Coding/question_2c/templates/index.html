@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Particle Interaction Graph</title>
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+</head>
+<body>
+<h2>Particle Collision Event</h2>
+
+<div id="plot" style="width:100%; height:600px;"></div>
+
+<script>
+    async function fetchEvent() {
+        try {
+            const response = await fetch('/event');
+            const event = await response.json();
+
+            renderEvent(event);
+        } catch (err) {
+            document.getElementById('plot').innerText = "Failed to load event.";
+            console.error(err);
+        }
+    }
+
+    function renderEvent(event) {
+        const particles = event.particles;
+        const edges = event.edges;
+
+        const scatter = {
+            x: particles.map(p => p.px),
+            y: particles.map(p => p.py),
+            z: particles.map(p => p.pz),
+            mode: 'markers+text',
+            type: 'scatter3d',
+            marker: {
+                size: 5,
+                color: 'blue',
+                opacity: 0.8
+            },
+            text: particles.map(p => `${p.symbol || 'Unknown'}`),
+        };
+
+        const lines = edges.map(edge => {
+            const from = particles[edge.from];
+            const to = particles[edge.to];
+            return {
+                x: [from.px, to.px],
+                y: [from.py, to.py],
+                z: [from.pz, to.pz],
+                mode: 'lines',
+                type: 'scatter3d',
+                line: { width: 2, color: 'red' }
+            };
+        });
+
+        const layout = {
+            title: `Collision Event`,
+            margin: { l: 0, r: 0, b: 0, t: 30 },
+            scene: {
+                xaxis: { title: 'px' },
+                yaxis: { title: 'py' },
+                zaxis: { title: 'pz' }
+            }
+        };
+
+        Plotly.newPlot('plot', [scatter, ...lines], layout);
+    }
+
+    // Automatically load event on page load
+    fetchEvent();
+</script>
+</body>
+</html>
